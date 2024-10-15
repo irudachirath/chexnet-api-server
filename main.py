@@ -27,9 +27,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-CKPT_PATH = 'D:\Academics\Semester 5\Data Science Project\chexnet-api-server\chexnet_2nd_epoch_10_auc_0.8371.pth'
+# CKPT_PATH = 'D:\Academics\Semester 5\Data Science Project\chexnet-api-server\chexnet_epoch_15_auc_0.8144_new.pth'
+CKPT_PATH = 'D:\Academics\Semester 5\Data Science Project\chexnet-api-server\chexnet_epoch_17_auc_0.8457.pth'
+# CKPT_PATH = 'D:\Academics\Semester 5\Data Science Project\chexnet-api-server\chexnet_epoch_13_auc_0.8179.pth'
 N_CLASSES = 14
-CLASS_NAMES = [ 'Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax', 'Consolidation', 'Edema', 'Emphysema', 'Fibrosis', 'Pleural_Thickening', 'Hernia']
+CLASS_NAMES = ['Atelectasis', 'Consolidation', 'Infiltration', 'Pneumothorax', 'Edema', 'Emphysema', 'Fibrosis', 'Effusion', 'Pneumonia', 'Pleural_Thickening',
+'Cardiomegaly', 'Nodule', 'Mass', 'Hernia']
 
 cudnn.benchmark = True
 
@@ -39,7 +42,7 @@ model = torch.nn.DataParallel(model).cuda()
 
 if os.path.isfile(CKPT_PATH):
     print("=> loading checkpoint")
-    checkpoint = torch.load(CKPT_PATH)
+    checkpoint = torch.load(CKPT_PATH, weights_only=True)
     model.load_state_dict(checkpoint)
     print("=> loaded checkpoint")
 else:
@@ -53,6 +56,10 @@ transformation_pipeline = transforms.Compose([
 ])
 
 model.eval()
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the chexnet API server!"}
 
 class ImageData(BaseModel):
     imageUrls: List[str]
@@ -80,17 +87,16 @@ async def predict(data: ImageData):
             img_tensor = img_tensor.unsqueeze(0)
 
             # Predict
+            pred = []
             with torch.no_grad():
                 output = model(img_tensor)
                 values = output.squeeze().tolist()
-                prediction = torch.nn.functional.softmax(output, dim=1).squeeze().tolist()
+                prediction = torch.nn.functional.sigmoid(output).squeeze().tolist()
 
-            # Create a dictionary for the prediction output
-            prediction_dict = {CLASS_NAMES[i]: {"model_value": values[i], "softmax_value": prediction[i]} for i in range(len(CLASS_NAMES))}
-            predictions.append({
-                "image_url": image_url,
-                "prediction": prediction_dict
-            })
+            for i in range(len(CLASS_NAMES)):
+                pred.append({"disease": CLASS_NAMES[i], "model_value": values[i], "sigmoid_value": prediction[i]})
+
+            predictions.append({"image_url": image_url, "prediction": pred})
 
     return {"status": "success", "data": predictions}
 
