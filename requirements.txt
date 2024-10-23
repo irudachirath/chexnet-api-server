@@ -1,4 +1,11 @@
-fastapi
-uvicorn[standard]
-torch==2.0.1+cu118
-torchvision
+fastapi==0.68.0
+pillow==8.3.1
+gradio_client==1.4.0
+httpx==0.24.1
+typing-extensions==4.0
+pytest==6.2.4
+respx==0.17.0
+requests==2.25.1
+google-auth==1.32.1
+pydantic==1.8.2
+python-dotenv==0.17.1
