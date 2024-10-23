@@ -1,22 +1,43 @@
-import torch.nn as nn
-import torchvision
+import os
+from typing import List
+from fastapi import HTTPException
+from PIL import Image
+import logging
+from gradio_client import Client, file
+import tempfile
+import httpx
+from io import BytesIO
 
-class DenseNet121(nn.Module):
-    """Model modified.
+async def getPedictions(data: List[str]):
+    predictions = []
+    async with httpx.AsyncClient() as client:
+        for image_url in data.imageUrls:
+            try:
+                # Fetch the image from URL
+                resp = await client.get(image_url)
+                resp.raise_for_status()
+            except Exception as e:
+                logging.error(f"Error fetching image from URL: {e}")
+                raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
-    The architecture of our model is the same as standard DenseNet121
-    except the classifier layer which has an additional sigmoid function.
+            # Open the image and convert to RGB
+            img = Image.open(BytesIO(resp.content)).convert('RGB')
 
-    """
-    def __init__(self, out_size):
-        super(DenseNet121, self).__init__()
-        self.densenet121 = torchvision.models.densenet121(weights=torchvision.models.DenseNet121_Weights.DEFAULT)
-        num_ftrs = self.densenet121.classifier.in_features
-        self.densenet121.classifier = nn.Sequential(
-            nn.Linear(num_ftrs, out_size),
-            # nn.Sigmoid()
-        )
+            try:
+                # Save the image to a temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+                    img.save(temp_file, format='JPEG')
+                    temp_file_path = temp_file.name
 
-    def forward(self, x):
-        x = self.densenet121(x)
-        return x
+                # Send POST request to Hugging Face Gradio app
+                gradio_client = Client("https://iruda21cse-chextnet-raylabs.hf.space/")
+                result = gradio_client.predict(image=file(temp_file_path))
+            except Exception as e:
+                logging.error(f"Error sending image to Hugging Face Gradio app: {e}")
+                raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+            finally:
+                # Clean up the temporary file
+                os.remove(temp_file_path)
+
+            predictions.append({"image_url": image_url, "prediction": result})
+    return predictions
