@@ -28,8 +28,8 @@ app.add_middleware(
 )
 
 N_CLASSES = 14
-CLASS_NAMES = ['Atelectasis', 'Consolidation', 'Infiltration', 'Pneumothorax', 'Edema', 'Emphysema', 'Fibrosis', 'Effusion', 'Pneumonia', 'Pleural_Thickening',
-'Cardiomegaly', 'Nodule', 'Mass', 'Hernia']
+CLASS_NAMES = ["Atelectasis", "Consolidation", "Infiltration", "Pneumothorax", "Edema", "Emphysema", "Fibrosis", "Effusion", "Pneumonia", "Pleural_Thickening",
+"Cardiomegaly", "Nodule", "Mass", "Hernia"]
 
 @app.get("/")
 async def root():
