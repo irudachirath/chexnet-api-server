@@ -123,7 +123,16 @@ def generate_medical_report(conditions):
     initialize_chatbot()
     
     # Initialize the report
-    report = []
+    report = {
+        "summary": "",
+        "data": []
+    }
+
+    # Add the initial prompt to the report
+    prompt = f"For this response give me the summary as a pharagraph without any headings. Based on the following findings from X-ray images, please provide an overall impression of the patient's condition: {', '.join(conditions)}."
+    overoll_summary = [Conversation(user=prompt, assistant="")]
+    response = ask_medical_chatbot(overoll_summary)
+    report["summary"] = response["text"]
     
     for condition in conditions:
         # Get the details for the condition
@@ -133,7 +142,7 @@ def generate_medical_report(conditions):
         response_text = response['text']
         
         # Add the response to the report
-        report.append({
+        report["data"].append({
             "condition": condition,
             "details": response_text
         })
