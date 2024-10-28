@@ -7,7 +7,7 @@ import time  # Import time module for tracking execution time
 
 async def getPredictions(image_urls: List[str]):
     predictions = []
-    gradio_client = Client("iruda21cse/chextnet-raylabs")
+    gradio_client = Client("https://iruda21cse-chextnet-raylabs.hf.space")
     async with httpx.AsyncClient() as client:
         for image_url in image_urls:
             try:
