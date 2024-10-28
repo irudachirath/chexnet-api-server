@@ -2,7 +2,7 @@ from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from model import getPedictions
+from model import getPredictions
 from chatbot import ask_medical_chatbot, generate_medical_report
 from dotenv import load_dotenv
 import os
@@ -40,7 +40,7 @@ class ImageData(BaseModel):
 
 @app.post("/model/api/v1/predict/")
 async def predict(data: ImageData):
-    predictions = await getPedictions(data)
+    predictions = await getPredictions(data.imageUrls)
     return {"status": "success", "data": predictions}
 class Conversation(BaseModel):
     user: str
