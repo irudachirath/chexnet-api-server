@@ -51,7 +51,7 @@ async def chat(conversation_history: List[Conversation]):
     if not conversation_history:
         raise HTTPException(status_code=400, detail="Conversation history is required")
     # Call the chatbot logic and handle any exceptions properly
-    return ask_medical_chatbot(conversation_history)
+    return await ask_medical_chatbot(conversation_history)
 
 class PositiveCondition(BaseModel):
     conditions: List[str]
@@ -60,7 +60,7 @@ class PositiveCondition(BaseModel):
 async def report(conditions: PositiveCondition):
     if not conditions.conditions:
         raise HTTPException(status_code=400, detail="Conditions are required")
-    return generate_medical_report(conditions.conditions)
+    return await generate_medical_report(conditions.conditions)
 
 if __name__ == "__main__":
     import uvicorn
