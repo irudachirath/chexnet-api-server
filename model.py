@@ -4,10 +4,14 @@ import logging
 from gradio_client import Client
 import httpx
 import time  # Import time module for tracking execution time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 async def getPredictions(image_urls: List[str]):
     predictions = []
     gradio_client = Client("https://iruda21cse-chextnet-raylabs.hf.space")
+    loop = asyncio.get_event_loop()
+
     async with httpx.AsyncClient() as client:
         for image_url in image_urls:
             try:
@@ -18,8 +22,9 @@ async def getPredictions(image_urls: List[str]):
                 # Start the timer
                 start_time = time.time()
 
-                # Send URL to Hugging Face Gradio app
-                result = gradio_client.predict(image_url=image_url)
+                # Send URL to Hugging Face Gradio app using ThreadPoolExecutor
+                with ThreadPoolExecutor() as pool:
+                    result = await loop.run_in_executor(pool, gradio_client.predict, image_url)
 
                 # End the timer
                 end_time = time.time()
